@@ -23,7 +23,6 @@ import com.velocitypowered.api.proxy.server.ServerPing.SamplePlayer
 import com.velocitypowered.api.proxy.server.ServerPing.Version
 import java.net.URL
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit.MINUTES
 import javax.security.auth.login.LoginException
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
@@ -80,10 +79,7 @@ class HEProxy @Inject constructor(
 
 	@Subscribe
 	fun onStart(event: ListenerBoundEvent): EventTask = async {
-		val taskBuilder = server.scheduler.buildTask(this) { loadMOTDs() }
-
-		taskBuilder.repeat(5L, MINUTES)
-		taskBuilder.schedule()
+		loadMOTDs()
 
 		val commandManager = VelocityCommandManager(server, this)
 

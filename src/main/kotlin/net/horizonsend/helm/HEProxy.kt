@@ -12,6 +12,7 @@ import com.velocitypowered.api.event.connection.PreLoginEvent
 import com.velocitypowered.api.event.connection.PreLoginEvent.PreLoginComponentResult
 import com.velocitypowered.api.event.proxy.ListenerBoundEvent
 import com.velocitypowered.api.event.proxy.ProxyPingEvent
+import com.velocitypowered.api.event.proxy.ProxyReloadEvent
 import com.velocitypowered.api.plugin.Plugin
 import com.velocitypowered.api.plugin.annotation.DataDirectory
 import com.velocitypowered.api.proxy.ProxyServer
@@ -20,7 +21,6 @@ import com.velocitypowered.api.proxy.server.ServerPing
 import com.velocitypowered.api.proxy.server.ServerPing.Players
 import com.velocitypowered.api.proxy.server.ServerPing.SamplePlayer
 import com.velocitypowered.api.proxy.server.ServerPing.Version
-import com.velocitypowered.api.scheduler.ScheduledTask
 import java.net.URL
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit.MINUTES
@@ -49,7 +49,6 @@ class HEProxy @Inject constructor(
 	@DataDirectory private val dataDirectory: Path
 ) {
 	private var motds: Set<String> = setOf()
-	private lateinit var motdTask: ScheduledTask
 
 	@Subscribe
 	fun onPreLoginEvent(event: PreLoginEvent): EventTask = async {
@@ -74,13 +73,17 @@ class HEProxy @Inject constructor(
 	}
 
 	@Subscribe
+	fun onProxyReload(event: ProxyReloadEvent): EventTask = async {
+		loadJDA()
+		loadMOTDs()
+	}
+
+	@Subscribe
 	fun onStart(event: ListenerBoundEvent): EventTask = async {
-		val taskBuilder = server.scheduler.buildTask(this) {
-			motds = URL("https://raw.githubusercontent.com/HorizonsEndMC/MOTDs/main/MOTD").readText().split("\n").filter { it.isNotEmpty() }.toSet()
-		}
+		val taskBuilder = server.scheduler.buildTask(this) { loadMOTDs() }
 
 		taskBuilder.repeat(5L, MINUTES)
-		motdTask = taskBuilder.schedule()
+		taskBuilder.schedule()
 
 		val commandManager = VelocityCommandManager(server, this)
 
@@ -142,6 +145,10 @@ class HEProxy @Inject constructor(
 		commandManager.registerCommand(Server())
 
 		loadJDA()
+	}
+
+	private fun loadMOTDs() {
+		motds = URL("https://raw.githubusercontent.com/HorizonsEndMC/MOTDs/main/MOTD").readText().split("\n").filter { it.isNotEmpty() }.toSet()
 	}
 
 	private fun loadJDA() {

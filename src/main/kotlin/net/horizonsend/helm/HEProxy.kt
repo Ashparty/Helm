@@ -7,6 +7,7 @@ import com.velocitypowered.api.event.EventTask
 import com.velocitypowered.api.event.EventTask.async
 import com.velocitypowered.api.event.ResultedEvent.ComponentResult
 import com.velocitypowered.api.event.Subscribe
+import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.connection.LoginEvent
 import com.velocitypowered.api.event.connection.PreLoginEvent
 import com.velocitypowered.api.event.connection.PreLoginEvent.PreLoginComponentResult
@@ -28,7 +29,10 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.readText
+import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder.createLight
+import net.dv8tion.jda.api.OnlineStatus.ONLINE
+import net.dv8tion.jda.api.entities.Activity.playing
 import net.horizonsend.helm.commands.Move
 import net.horizonsend.helm.commands.Server
 import net.kyori.adventure.text.minimessage.MiniMessage.miniMessage
@@ -48,6 +52,7 @@ class HEProxy @Inject constructor(
 	@DataDirectory private val dataDirectory: Path
 ) {
 	private var motds: Set<String> = setOf()
+	private var jda: JDA? = null
 
 	@Subscribe
 	fun onPreLoginEvent(event: PreLoginEvent): EventTask = async {
@@ -57,8 +62,17 @@ class HEProxy @Inject constructor(
 
 	@Subscribe
 	fun onLoginEvent(event: LoginEvent): EventTask = async {
-		if (server.playerCount > 30 && !event.player.hasPermission("helm.maxPlayerBypass"))
+		if (server.playerCount > 30 && !event.player.hasPermission("helm.maxPlayerBypass")) {
 			event.result = ComponentResult.denied(miniMessage().deserialize("<yellow>The server is full!"))
+			return@async
+		}
+
+		jda?.presence?.setPresence(ONLINE, playing("with ${server.playerCount} player${if (server.playerCount != 1) "s" else ""}."))
+	}
+
+	@Subscribe
+	fun onDisconnectEvent(event: DisconnectEvent): EventTask = async {
+		jda?.presence?.setPresence(ONLINE, playing("with ${server.playerCount} player${if (server.playerCount != 1) "s" else ""}."))
 	}
 
 	@Subscribe

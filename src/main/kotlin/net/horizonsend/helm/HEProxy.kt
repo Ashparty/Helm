@@ -115,7 +115,7 @@ class HEProxy @Inject constructor(
 			val result = server.getServer(serverName).orElse(null)
 
 			if (result == null) {
-				it.sender.sendMessage(miniMessage().deserialize("<yellow>Server <white>\"$serverName\"</white> does not exist!"))
+				it.sender.sendMessage(miniMessage().deserialize("<yellow>Server <white>$serverName</white> does not exist!"))
 				throw InvalidCommandArgument(false)
 			}
 
@@ -132,7 +132,7 @@ class HEProxy @Inject constructor(
 					val server = server.getServer(serverName).orElse(null)
 
 					if (server == null) {
-						it.sender.sendMessage(miniMessage().deserialize("<yellow>Server <white>\"$serverName\"</white> does not exist!"))
+						it.sender.sendMessage(miniMessage().deserialize("<yellow>Server <white>$serverName</white> does not exist!"))
 						throw InvalidCommandArgument(false)
 					}
 
@@ -142,7 +142,7 @@ class HEProxy @Inject constructor(
 					val player = server.getPlayer(selector).orElse(null)
 
 					if (player == null) {
-						it.sender.sendMessage(miniMessage().deserialize("<yellow>Player <white>\"$selector\"</white> is not online!"))
+						it.sender.sendMessage(miniMessage().deserialize("<yellow>Player <white>$selector</white> is not online!"))
 						throw InvalidCommandArgument(false)
 					}
 

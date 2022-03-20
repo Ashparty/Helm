@@ -19,7 +19,7 @@ class Move: BaseCommand() {
 	@Suppress("unused") // Entrypoint (Command)
 	fun move(source: Player, targetPlayers: Collection<Player>, targetServer: RegisteredServer) {
 		targetPlayers.forEach {
-			it.sendMessage(miniMessage().deserialize("<aqua>You have been moved to <white>\"${targetServer.serverInfo.name}\"</white> by <white>\"${source.username}\"</white>!"))
+			it.sendMessage(miniMessage().deserialize("<aqua>You have been moved to <white>${targetServer.serverInfo.name}</white> by <white>${source.username}</white>!"))
 			it.createConnectionRequest(targetServer).fireAndForget()
 		}
 	}

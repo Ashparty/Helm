@@ -17,7 +17,7 @@ class Server: BaseCommand() {
 	@Suppress("unused") // Entrypoint (Command)
 	fun server(source: Player, targetServer: RegisteredServer) {
 		if (!source.hasPermission("helm.server.${targetServer.serverInfo.name}")) {
-			source.sendMessage(miniMessage().deserialize("<red>You do not have permission to go to <white>\"${targetServer.serverInfo.name}\"</white>."))
+			source.sendMessage(miniMessage().deserialize("<red>You do not have permission to go to <white>${targetServer.serverInfo.name}</white>."))
 			return
 		}
 

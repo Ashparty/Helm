@@ -51,14 +51,14 @@ import org.slf4j.Logger
 	authors = ["PeterCrawley"]
 )
 class Helm @Inject constructor(
-	private val server: ProxyServer,
+	private val proxy: ProxyServer,
 	private val logger: Logger,
 	@DataDirectory private val dataDirectory: Path
 ) {
 	private var motds: Set<String> = setOf()
 	private var jda: JDA? = null
 
-	private val limbo: RegisteredServer? = server.getServer("limbo").orElseGet(null)
+	private val limbo: RegisteredServer? = proxy.getServer("limbo").orElseGet(null)
 
 	@Subscribe
 	fun onPreLoginEvent(event: PreLoginEvent): EventTask = async {
@@ -68,24 +68,24 @@ class Helm @Inject constructor(
 
 	@Subscribe
 	fun onLoginEvent(event: LoginEvent): EventTask = async {
-		if (server.playerCount > 30 && !event.player.hasPermission("helm.maxPlayerBypass")) {
+		if (proxy.playerCount > 30 && !event.player.hasPermission("helm.maxPlayerBypass")) {
 			event.result = ComponentResult.denied(miniMessage().deserialize("<yellow>The server is full!"))
 			return@async
 		}
 
-		jda?.presence?.setPresence(ONLINE, playing("with ${server.playerCount} player${if (server.playerCount != 1) "s" else ""}."))
+		jda?.presence?.setPresence(ONLINE, playing("with ${proxy.playerCount} player${if (proxy.playerCount != 1) "s" else ""}."))
 	}
 
 	@Subscribe
 	fun onDisconnectEvent(event: DisconnectEvent): EventTask = async {
-		jda?.presence?.setPresence(ONLINE, playing("with ${server.playerCount} player${if (server.playerCount != 1) "s" else ""}."))
+		jda?.presence?.setPresence(ONLINE, playing("with ${proxy.playerCount} player${if (proxy.playerCount != 1) "s" else ""}."))
 	}
 
 	@Subscribe
 	fun onProxyPingEvent(event: ProxyPingEvent): EventTask = async {
 		event.ping = ServerPing(
 			Version(758, "1.18.2"),
-			Players(server.playerCount, 30, server.allPlayers.map { SamplePlayer(it.username, it.uniqueId) }),
+			Players(proxy.playerCount, 30, proxy.allPlayers.map { SamplePlayer(it.username, it.uniqueId) }),
 			miniMessage().deserialize("<gold><b>Horizon's End</b><gray> - <i>A continuation of Star Legacy.<reset>\n${motds.random()}"),
 			null
 		)
@@ -106,7 +106,7 @@ class Helm @Inject constructor(
 			event.player.createConnectionRequest(limbo).fireAndForget()
 
 			var task: ScheduledTask? = null
-			task = server.scheduler.buildTask(this) {
+			task = proxy.scheduler.buildTask(this) {
 				try {
 					event.server.ping().join()
 
@@ -128,24 +128,24 @@ class Helm @Inject constructor(
 	fun onStart(event: ListenerBoundEvent): EventTask = async {
 		loadMOTDs()
 
-		val commandManager = VelocityCommandManager(server, this)
+		val commandManager = VelocityCommandManager(proxy, this)
 
 		commandManager.commandCompletions.registerCompletion("servers") {
-			server.allServers.map { it.serverInfo.name }
+			proxy.allServers.map { it.serverInfo.name }
 		}
 
 		commandManager.commandCompletions.registerCompletion("targets") {
 			val result = mutableSetOf("*")
 
-			result.addAll(server.allPlayers.map { it.username })
-			result.addAll(server.allServers.map { "@${it.serverInfo.name}" })
+			result.addAll(proxy.allPlayers.map { it.username })
+			result.addAll(proxy.allServers.map { "@${it.serverInfo.name}" })
 
 			result
 		}
 
 		commandManager.commandContexts.registerContext(RegisteredServer::class.java) {
 			val serverName = it.popFirstArg()
-			val result = server.getServer(serverName).orElse(null)
+			val result = proxy.getServer(serverName).orElse(null)
 
 			if (result == null) {
 				it.sender.sendMessage(miniMessage().deserialize("<yellow>Server <white>$serverName</white> does not exist!"))
@@ -159,10 +159,10 @@ class Helm @Inject constructor(
 			val selector = it.popFirstArg()
 
 			when (selector.first()) {
-				'*' -> server.allPlayers
+				'*' -> proxy.allPlayers
 				'@' -> {
 					val serverName = selector.substring(1)
-					val server = server.getServer(serverName).orElse(null)
+					val server = proxy.getServer(serverName).orElse(null)
 
 					if (server == null) {
 						it.sender.sendMessage(miniMessage().deserialize("<yellow>Server <white>$serverName</white> does not exist!"))
@@ -172,7 +172,7 @@ class Helm @Inject constructor(
 					server.playersConnected
 				}
 				else -> {
-					val player = server.getPlayer(selector).orElse(null)
+					val player = proxy.getPlayer(selector).orElse(null)
 
 					if (player == null) {
 						it.sender.sendMessage(miniMessage().deserialize("<yellow>Player <white>$selector</white> is not online!"))

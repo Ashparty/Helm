@@ -50,7 +50,7 @@ import org.slf4j.Logger
 	url = "https://horizonsend.net",
 	authors = ["PeterCrawley"]
 )
-class HEProxy @Inject constructor(
+class Helm @Inject constructor(
 	private val server: ProxyServer,
 	private val logger: Logger,
 	@DataDirectory private val dataDirectory: Path

@@ -24,8 +24,10 @@ import com.velocitypowered.api.proxy.server.ServerPing
 import com.velocitypowered.api.proxy.server.ServerPing.Players
 import com.velocitypowered.api.proxy.server.ServerPing.SamplePlayer
 import com.velocitypowered.api.proxy.server.ServerPing.Version
+import com.velocitypowered.api.scheduler.ScheduledTask
 import java.net.URL
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit.SECONDS
 import javax.security.auth.login.LoginException
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
@@ -102,7 +104,17 @@ class HEProxy @Inject constructor(
 
 		else {
 			event.player.createConnectionRequest(limbo).fireAndForget()
-			transferToServer(event.player, event.server)
+
+			var task: ScheduledTask? = null
+			task = server.scheduler.buildTask(this) {
+				try {
+					event.server.ping().join()
+
+				} finally {
+					task!!.cancel()
+					transferToServer(event.player, event.server)
+				}
+			}.repeat(1, SECONDS).schedule()
 		}
 	}
 

@@ -11,11 +11,13 @@ import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.connection.LoginEvent
 import com.velocitypowered.api.event.connection.PreLoginEvent
 import com.velocitypowered.api.event.connection.PreLoginEvent.PreLoginComponentResult
+import com.velocitypowered.api.event.player.KickedFromServerEvent
 import com.velocitypowered.api.event.proxy.ListenerBoundEvent
 import com.velocitypowered.api.event.proxy.ProxyPingEvent
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent
 import com.velocitypowered.api.plugin.Plugin
 import com.velocitypowered.api.plugin.annotation.DataDirectory
+import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import com.velocitypowered.api.proxy.server.RegisteredServer
 import com.velocitypowered.api.proxy.server.ServerPing
@@ -54,6 +56,8 @@ class HEProxy @Inject constructor(
 	private var motds: Set<String> = setOf()
 	private var jda: JDA? = null
 
+	private val limbo: RegisteredServer? = server.getServer("limbo").orElseGet(null)
+
 	@Subscribe
 	fun onPreLoginEvent(event: PreLoginEvent): EventTask = async {
 		if (event.connection.protocolVersion.protocol != 758)
@@ -83,6 +87,23 @@ class HEProxy @Inject constructor(
 			miniMessage().deserialize("<gold><b>Horizon's End</b><gray> - <i>A continuation of Star Legacy.<reset>\n${motds.random()}"),
 			null
 		)
+	}
+
+	private fun transferToServer(player: Player, server: RegisteredServer) {
+		player.createConnectionRequest(server).connect().handleAsync { result, _ ->
+			if (!result.isSuccessful) transferToServer(player, server)
+		}
+	}
+
+	@Subscribe
+	fun onKickedFromServerEvent(event: KickedFromServerEvent): EventTask = async {
+		if (limbo == null)
+			event.player.disconnect(event.serverKickReason.orElse(miniMessage().deserialize("Unexpectedly disconnected from backend server.")))
+
+		else {
+			event.player.createConnectionRequest(limbo).fireAndForget()
+			transferToServer(event.player, event.server)
+		}
 	}
 
 	@Subscribe

@@ -201,7 +201,7 @@ class Helm @Inject constructor(
 
 		try {
 			createLight(tokenFile.readText(), emptySet()).build()
-		} catch (_: LoginException) {
+		} catch (_: Exception) {
 			logger.warn("Failed to connect to discord, server status will not be shown in discord.")
 		}
 	}

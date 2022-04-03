@@ -77,7 +77,7 @@ class Helm @Inject constructor(
 	}
 
 	@Subscribe
-	fun onDisconnectEvent(event: DisconnectEvent): EventTask = async {
+	fun onDisconnectEvent(@Suppress("unused") event: DisconnectEvent): EventTask = async {
 		jda?.presence?.setPresence(ONLINE, playing("with ${proxy.playerCount} player${if (proxy.playerCount != 1) "s" else ""}."))
 	}
 
@@ -119,13 +119,13 @@ class Helm @Inject constructor(
 	}
 
 	@Subscribe
-	fun onProxyReload(event: ProxyReloadEvent): EventTask = async {
+	fun onProxyReload(@Suppress("unused") event: ProxyReloadEvent): EventTask = async {
 		loadJDA()
 		loadMOTDs()
 	}
 
 	@Subscribe
-	fun onStart(event: ListenerBoundEvent): EventTask = async {
+	fun onStart(@Suppress("unused") event: ListenerBoundEvent): EventTask = async {
 		loadMOTDs()
 
 		val commandManager = VelocityCommandManager(proxy, this)

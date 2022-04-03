@@ -28,7 +28,6 @@ import com.velocitypowered.api.scheduler.ScheduledTask
 import java.net.URL
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit.SECONDS
-import javax.security.auth.login.LoginException
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.exists

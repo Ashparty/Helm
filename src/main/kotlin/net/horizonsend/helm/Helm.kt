@@ -12,6 +12,8 @@ import com.velocitypowered.api.event.connection.LoginEvent
 import com.velocitypowered.api.event.connection.PreLoginEvent
 import com.velocitypowered.api.event.connection.PreLoginEvent.PreLoginComponentResult
 import com.velocitypowered.api.event.player.KickedFromServerEvent
+import com.velocitypowered.api.event.player.KickedFromServerEvent.DisconnectPlayer
+import com.velocitypowered.api.event.player.KickedFromServerEvent.RedirectPlayer
 import com.velocitypowered.api.event.proxy.ListenerBoundEvent
 import com.velocitypowered.api.event.proxy.ProxyPingEvent
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent
@@ -98,23 +100,20 @@ class Helm @Inject constructor(
 
 	@Subscribe
 	fun onKickedFromServerEvent(event: KickedFromServerEvent): EventTask = async {
-		if (limbo == null)
-			event.player.disconnect(event.serverKickReason.orElse(miniMessage().deserialize("Unexpectedly disconnected from backend server.")))
-
-		else {
-			event.player.createConnectionRequest(limbo).fireAndForget()
-
-			var task: ScheduledTask? = null
-			task = proxy.scheduler.buildTask(this) {
-				try {
-					event.server.ping().join()
-
-				} finally {
-					task!!.cancel()
-					transferToServer(event.player, event.server)
-				}
-			}.repeat(1, SECONDS).schedule()
+		if (limbo == null || event.server == limbo) {
+			event.result = DisconnectPlayer.create(miniMessage().deserialize("<red>Unexpectedly disconnected from <white>${event.server.serverInfo.name}</white>."))
+			return@async
 		}
+
+		event.result = RedirectPlayer.create(limbo)
+
+		lateinit var task: ScheduledTask
+		task = proxy.scheduler.buildTask(this) {
+			try { event.server.ping().join() } catch (_: Exception) {} finally { // Ping the server, ignore failure, transfer the player once we succeed.
+				task.cancel()
+				transferToServer(event.player, event.server)
+			}
+		}.repeat(1, SECONDS).schedule()
 	}
 
 	@Subscribe

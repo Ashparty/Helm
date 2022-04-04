@@ -105,7 +105,7 @@ class Helm @Inject constructor(
 			return@async
 		}
 
-		event.result = RedirectPlayer.create(limbo)
+		event.result = RedirectPlayer.create(limbo, miniMessage().deserialize("<aqua><red><b>Welcome to Limbo!</b></red>\nAs you're here, the server is restarting, or something broke.\n<grey><i>How am I meant to know? I'm just a pre-written message.</i></grey>\nAnyway, we will try to get you back where you were as soon as we can.\nHowever you can switch to another server using the <white>/server</white> command."))
 
 		lateinit var task: ScheduledTask
 		task = proxy.scheduler.buildTask(this) {

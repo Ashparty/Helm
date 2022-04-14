@@ -7,12 +7,15 @@ import com.velocitypowered.api.event.EventTask
 import com.velocitypowered.api.event.EventTask.async
 import com.velocitypowered.api.event.ResultedEvent.ComponentResult
 import com.velocitypowered.api.event.Subscribe
+import com.velocitypowered.api.event.connection.DisconnectEvent
+import com.velocitypowered.api.event.connection.DisconnectEvent.LoginStatus.SUCCESSFUL_LOGIN
 import com.velocitypowered.api.event.connection.LoginEvent
 import com.velocitypowered.api.event.connection.PreLoginEvent
 import com.velocitypowered.api.event.connection.PreLoginEvent.PreLoginComponentResult
 import com.velocitypowered.api.event.player.KickedFromServerEvent
 import com.velocitypowered.api.event.player.KickedFromServerEvent.DisconnectPlayer
 import com.velocitypowered.api.event.player.KickedFromServerEvent.RedirectPlayer
+import com.velocitypowered.api.event.player.ServerConnectedEvent
 import com.velocitypowered.api.event.proxy.ListenerBoundEvent
 import com.velocitypowered.api.event.proxy.ProxyPingEvent
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent
@@ -94,6 +97,32 @@ class Helm @Inject constructor(
 				transferToServer(event.player, event.server)
 			}
 		}.repeat(1, SECONDS).schedule()
+	}
+
+	fun formatServerName(server: RegisteredServer): String =
+		when (val name = server.serverInfo.name) {
+			"survival" -> "<red>Survival</red>"
+			"creative" -> "<green>Creative</green>"
+			"limbo" -> "<yellow>Limbo</yellow>"
+			else -> name
+		}
+
+	@Subscribe
+	fun onPlayerConnectToServer(event: ServerConnectedEvent) {
+		val previousServer = event.previousServer.orElse(null)
+
+		if (previousServer == null)
+			proxy.sendMessage(miniMessage().deserialize("<gray>[<green>+</green> ${formatServerName(event.server)}]</gray> ${event.player.username} <i><dark_gray>${proxy.playerCount} online now."))
+
+		else
+			proxy.sendMessage(miniMessage().deserialize("<gray>[${formatServerName(previousServer)} > ${formatServerName(event.server)}]</gray> ${event.player.username}"))
+	}
+
+	@Subscribe
+	fun onPlayerDisconnect(event: DisconnectEvent) {
+		if (event.loginStatus != SUCCESSFUL_LOGIN) return
+
+		proxy.sendMessage(miniMessage().deserialize("<gray>[<red>-</red> ${formatServerName(event.player.currentServer.orElse(null).server)}]</gray> ${event.player.username} <i><dark_gray>${proxy.playerCount} online now."))
 	}
 
 	@Subscribe

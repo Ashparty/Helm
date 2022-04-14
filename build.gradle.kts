@@ -19,7 +19,6 @@ dependencies {
 
     implementation("net.kyori:adventure-text-minimessage:4.10.0")
     implementation("co.aikar:acf-velocity:0.5.1-SNAPSHOT")
-    implementation("net.dv8tion:JDA:5.0.0-alpha.5")
 }
 
 tasks {

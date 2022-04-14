@@ -7,7 +7,6 @@ import com.velocitypowered.api.event.EventTask
 import com.velocitypowered.api.event.EventTask.async
 import com.velocitypowered.api.event.ResultedEvent.ComponentResult
 import com.velocitypowered.api.event.Subscribe
-import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.connection.LoginEvent
 import com.velocitypowered.api.event.connection.PreLoginEvent
 import com.velocitypowered.api.event.connection.PreLoginEvent.PreLoginComponentResult
@@ -18,7 +17,6 @@ import com.velocitypowered.api.event.proxy.ListenerBoundEvent
 import com.velocitypowered.api.event.proxy.ProxyPingEvent
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent
 import com.velocitypowered.api.plugin.Plugin
-import com.velocitypowered.api.plugin.annotation.DataDirectory
 import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import com.velocitypowered.api.proxy.server.RegisteredServer
@@ -28,16 +26,7 @@ import com.velocitypowered.api.proxy.server.ServerPing.SamplePlayer
 import com.velocitypowered.api.proxy.server.ServerPing.Version
 import com.velocitypowered.api.scheduler.ScheduledTask
 import java.net.URL
-import java.nio.file.Path
 import java.util.concurrent.TimeUnit.SECONDS
-import kotlin.io.path.createDirectories
-import kotlin.io.path.createFile
-import kotlin.io.path.exists
-import kotlin.io.path.readText
-import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.JDABuilder.createLight
-import net.dv8tion.jda.api.OnlineStatus.ONLINE
-import net.dv8tion.jda.api.entities.Activity.playing
 import net.horizonsend.helm.commands.Move
 import net.horizonsend.helm.commands.Server
 import net.kyori.adventure.text.minimessage.MiniMessage.miniMessage
@@ -53,11 +42,9 @@ import org.slf4j.Logger
 )
 class Helm @Inject constructor(
 	private val proxy: ProxyServer,
-	private val logger: Logger,
-	@DataDirectory private val dataDirectory: Path
+	logger: Logger
 ) {
 	private var motds: Set<String> = setOf()
-	private var jda: JDA? = null
 
 	private val limbo: RegisteredServer? = proxy.getServer("limbo").orElseGet(null)
 
@@ -73,13 +60,6 @@ class Helm @Inject constructor(
 			event.result = ComponentResult.denied(miniMessage().deserialize("<yellow>The server is full!"))
 			return@async
 		}
-
-		jda?.presence?.setPresence(ONLINE, playing("with ${proxy.playerCount} player${if (proxy.playerCount != 1) "s" else ""}."))
-	}
-
-	@Subscribe
-	fun onDisconnectEvent(@Suppress("unused") event: DisconnectEvent): EventTask = async {
-		jda?.presence?.setPresence(ONLINE, playing("with ${proxy.playerCount} player${if (proxy.playerCount != 1) "s" else ""}."))
 	}
 
 	@Subscribe
@@ -118,7 +98,6 @@ class Helm @Inject constructor(
 
 	@Subscribe
 	fun onProxyReload(@Suppress("unused") event: ProxyReloadEvent): EventTask = async {
-		loadJDA()
 		loadMOTDs()
 	}
 
@@ -184,23 +163,9 @@ class Helm @Inject constructor(
 
 		commandManager.registerCommand(Move())
 		commandManager.registerCommand(Server())
-
-		loadJDA()
 	}
 
 	private fun loadMOTDs() {
 		motds = URL("https://raw.githubusercontent.com/HorizonsEndMC/MOTDs/main/MOTD").readText().split("\n").filter { it.isNotEmpty() }.toSet()
-	}
-
-	private fun loadJDA() {
-		val tokenFile = dataDirectory.createDirectories().resolve("token")
-
-		if (!tokenFile.exists()) tokenFile.createFile()
-
-		try {
-			createLight(tokenFile.readText(), emptySet()).build()
-		} catch (_: Exception) {
-			logger.warn("Failed to connect to discord, server status will not be shown in discord.")
-		}
 	}
 }

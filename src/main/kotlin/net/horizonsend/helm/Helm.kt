@@ -75,11 +75,11 @@ class Helm @Inject constructor(
 		)
 	}
 
-	private fun transferToServer(player: Player, server: RegisteredServer) {
-		player.createConnectionRequest(server).connect().handleAsync { result, _ ->
-			if (!result.isSuccessful) transferToServer(player, server)
-		}
-	}
+//	private fun transferToServer(player: Player, server: RegisteredServer) {
+//		player.createConnectionRequest(server).connect().handleAsync { result, _ ->
+//			if (!result.isSuccessful) transferToServer(player, server)
+//		}
+//	}
 
 	@Subscribe
 	fun onKickedFromServerEvent(event: KickedFromServerEvent): EventTask = async {
@@ -90,13 +90,13 @@ class Helm @Inject constructor(
 
 		event.result = RedirectPlayer.create(limbo, miniMessage().deserialize("<aqua><red><b>Welcome to Limbo!</b></red>\nAs you're here, the server is restarting, or something broke.\n<grey><i>How am I meant to know? I'm just a pre-written message.</i></grey>\nAnyway, we will try to get you back where you were as soon as we can.\nHowever you can switch to another server using the <white>/server</white> command."))
 
-		lateinit var task: ScheduledTask
-		task = proxy.scheduler.buildTask(this) {
-			try { event.server.ping().join() } catch (_: Exception) {} finally { // Ping the server, ignore failure, transfer the player once we succeed.
-				task.cancel()
-				transferToServer(event.player, event.server)
-			}
-		}.repeat(1, SECONDS).schedule()
+//		lateinit var task: ScheduledTask
+//		task = proxy.scheduler.buildTask(this) {
+//			try { event.server.ping().join() } catch (_: Exception) {} finally { // Ping the server, ignore failure, transfer the player once we succeed.
+//				task.cancel()
+//				transferToServer(event.player, event.server)
+//			}
+//		}.repeat(1, SECONDS).schedule()
 	}
 
 	fun formatServerName(server: RegisteredServer): String =

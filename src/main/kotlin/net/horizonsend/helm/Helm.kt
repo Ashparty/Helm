@@ -15,6 +15,7 @@ import com.velocitypowered.api.event.connection.PreLoginEvent.PreLoginComponentR
 import com.velocitypowered.api.event.player.KickedFromServerEvent
 import com.velocitypowered.api.event.player.KickedFromServerEvent.DisconnectPlayer
 import com.velocitypowered.api.event.player.KickedFromServerEvent.RedirectPlayer
+import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent
 import com.velocitypowered.api.event.player.ServerConnectedEvent
 import com.velocitypowered.api.event.proxy.ListenerBoundEvent
 import com.velocitypowered.api.event.proxy.ProxyPingEvent
@@ -58,10 +59,9 @@ class Helm @Inject constructor(
 	}
 
 	@Subscribe
-	fun onLoginEvent(event: LoginEvent): EventTask = async {
-		if (proxy.playerCount >= 25 && !event.player.hasPermission("helm.maxPlayerBypass")) {
-			event.result = ComponentResult.denied(miniMessage().deserialize("<yellow>The server is full!"))
-			return@async
+	fun onLoginEvent(event: PlayerChooseInitialServerEvent): EventTask = async {
+		if (proxy.playerCount >= 40 && !event.player.hasPermission("helm.maxPlayerBypass")) {
+			event.setInitialServer(limbo)
 		}
 	}
 
@@ -69,7 +69,7 @@ class Helm @Inject constructor(
 	fun onProxyPingEvent(event: ProxyPingEvent): EventTask = async {
 		event.ping = ServerPing(
 			Version(758, "1.18.2"),
-			Players(proxy.playerCount, 25, proxy.allPlayers.map { SamplePlayer(it.username, it.uniqueId) }),
+			Players(proxy.playerCount, 40, proxy.allPlayers.map { SamplePlayer(it.username, it.uniqueId) }),
 			miniMessage().deserialize("<gold><b>Horizon's End</b><gray> - <i>A continuation of Star Legacy.<reset>\n${motds.random()}"),
 			null
 		)

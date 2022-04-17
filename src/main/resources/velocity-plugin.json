@@ -1,0 +1,4 @@
+{
+	"id":"helm",
+	"main":"net.horizonsend.helm.Helm"
+}

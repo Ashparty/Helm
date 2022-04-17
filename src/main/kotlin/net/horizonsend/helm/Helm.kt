@@ -5,11 +5,9 @@ import co.aikar.commands.VelocityCommandManager
 import com.google.inject.Inject
 import com.velocitypowered.api.event.EventTask
 import com.velocitypowered.api.event.EventTask.async
-import com.velocitypowered.api.event.ResultedEvent.ComponentResult
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.connection.DisconnectEvent.LoginStatus.SUCCESSFUL_LOGIN
-import com.velocitypowered.api.event.connection.LoginEvent
 import com.velocitypowered.api.event.connection.PreLoginEvent
 import com.velocitypowered.api.event.connection.PreLoginEvent.PreLoginComponentResult
 import com.velocitypowered.api.event.player.KickedFromServerEvent
@@ -20,32 +18,20 @@ import com.velocitypowered.api.event.player.ServerConnectedEvent
 import com.velocitypowered.api.event.proxy.ListenerBoundEvent
 import com.velocitypowered.api.event.proxy.ProxyPingEvent
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent
-import com.velocitypowered.api.plugin.Plugin
-import com.velocitypowered.api.proxy.Player
 import com.velocitypowered.api.proxy.ProxyServer
 import com.velocitypowered.api.proxy.server.RegisteredServer
 import com.velocitypowered.api.proxy.server.ServerPing
 import com.velocitypowered.api.proxy.server.ServerPing.Players
 import com.velocitypowered.api.proxy.server.ServerPing.SamplePlayer
 import com.velocitypowered.api.proxy.server.ServerPing.Version
-import com.velocitypowered.api.scheduler.ScheduledTask
 import java.net.URL
-import java.util.concurrent.TimeUnit.SECONDS
 import net.horizonsend.helm.commands.Move
 import net.horizonsend.helm.commands.Server
 import net.kyori.adventure.text.minimessage.MiniMessage.miniMessage
 import org.slf4j.Logger
 
-@Plugin(
-	id = "helm",
-	name = "Helm",
-	version = "1.0.0",
-	description = "Horizon's End Proxy Plugin",
-	url = "https://horizonsend.net",
-	authors = ["PeterCrawley"]
-)
 class Helm @Inject constructor(
-	private val proxy: ProxyServer,
+	val proxy: ProxyServer,
 	logger: Logger
 ) {
 	private var motds: Set<String> = setOf()

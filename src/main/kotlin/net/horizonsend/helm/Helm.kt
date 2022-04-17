@@ -16,33 +16,20 @@ import com.velocitypowered.api.event.player.KickedFromServerEvent.RedirectPlayer
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent
 import com.velocitypowered.api.event.player.ServerConnectedEvent
 import com.velocitypowered.api.event.proxy.ListenerBoundEvent
-import com.velocitypowered.api.event.proxy.ProxyPingEvent
-import com.velocitypowered.api.event.proxy.ProxyReloadEvent
 import com.velocitypowered.api.proxy.ProxyServer
 import com.velocitypowered.api.proxy.server.RegisteredServer
-import com.velocitypowered.api.proxy.server.ServerPing
-import com.velocitypowered.api.proxy.server.ServerPing.Players
-import com.velocitypowered.api.proxy.server.ServerPing.SamplePlayer
-import com.velocitypowered.api.proxy.server.ServerPing.Version
-import java.net.URL
 import net.horizonsend.helm.commands.Move
 import net.horizonsend.helm.commands.Server
+import net.horizonsend.helm.modules.PlayerLoginHandler
+import net.horizonsend.helm.modules.ServerPingHandler
 import net.kyori.adventure.text.minimessage.MiniMessage.miniMessage
 import org.slf4j.Logger
 
 class Helm @Inject constructor(
-	val proxy: ProxyServer,
+	internal val proxy: ProxyServer,
 	logger: Logger
 ) {
-	private var motds: Set<String> = setOf()
-
 	private val limbo: RegisteredServer? = proxy.getServer("limbo").orElseGet(null)
-
-	@Subscribe
-	fun onPreLoginEvent(event: PreLoginEvent): EventTask = async {
-		if (event.connection.protocolVersion.protocol != 758)
-			event.result = PreLoginComponentResult.denied(miniMessage().deserialize("<red>Only Minecraft 1.18.2 is supported on Horizon's End!"))
-	}
 
 	@Subscribe
 	fun onLoginEvent(event: PlayerChooseInitialServerEvent): EventTask = async {
@@ -52,22 +39,6 @@ class Helm @Inject constructor(
 	}
 
 	@Subscribe
-	fun onProxyPingEvent(event: ProxyPingEvent): EventTask = async {
-		event.ping = ServerPing(
-			Version(758, "1.18.2"),
-			Players(proxy.playerCount, 40, proxy.allPlayers.map { SamplePlayer(it.username, it.uniqueId) }),
-			miniMessage().deserialize("<gold><b>Horizon's End</b><gray> - <i>A continuation of Star Legacy.<reset>\n${motds.random()}"),
-			null
-		)
-	}
-
-//	private fun transferToServer(player: Player, server: RegisteredServer) {
-//		player.createConnectionRequest(server).connect().handleAsync { result, _ ->
-//			if (!result.isSuccessful) transferToServer(player, server)
-//		}
-//	}
-
-	@Subscribe
 	fun onKickedFromServerEvent(event: KickedFromServerEvent): EventTask = async {
 		if (limbo == null || event.server == limbo) {
 			event.result = DisconnectPlayer.create(miniMessage().deserialize("<red>Unexpectedly disconnected from <white>${event.server.serverInfo.name}</white>."))
@@ -75,17 +46,9 @@ class Helm @Inject constructor(
 		}
 
 		event.result = RedirectPlayer.create(limbo, miniMessage().deserialize("<aqua><red><b>Welcome to Limbo!</b></red>\nAs you're here, the server is restarting, or something broke.\n<grey><i>How am I meant to know? I'm just a pre-written message.</i></grey>\nAnyway, we will try to get you back where you were as soon as we can.\nHowever you can switch to another server using the <white>/server</white> command."))
-
-//		lateinit var task: ScheduledTask
-//		task = proxy.scheduler.buildTask(this) {
-//			try { event.server.ping().join() } catch (_: Exception) {} finally { // Ping the server, ignore failure, transfer the player once we succeed.
-//				task.cancel()
-//				transferToServer(event.player, event.server)
-//			}
-//		}.repeat(1, SECONDS).schedule()
 	}
 
-	fun formatServerName(server: RegisteredServer): String =
+	private fun formatServerName(server: RegisteredServer): String =
 		when (val name = server.serverInfo.name) {
 			"survival" -> "<red>Survival</red>"
 			"creative" -> "<green>Creative</green>"
@@ -112,14 +75,7 @@ class Helm @Inject constructor(
 	}
 
 	@Subscribe
-	fun onProxyReload(@Suppress("unused") event: ProxyReloadEvent): EventTask = async {
-		loadMOTDs()
-	}
-
-	@Subscribe
 	fun onStart(@Suppress("unused") event: ListenerBoundEvent): EventTask = async {
-		loadMOTDs()
-
 		val commandManager = VelocityCommandManager(proxy, this)
 
 		commandManager.commandCompletions.registerCompletion("servers") {
@@ -178,9 +134,8 @@ class Helm @Inject constructor(
 
 		commandManager.registerCommand(Move())
 		commandManager.registerCommand(Server())
-	}
 
-	private fun loadMOTDs() {
-		motds = URL("https://raw.githubusercontent.com/HorizonsEndMC/MOTDs/main/MOTD").readText().split("\n").filter { it.isNotEmpty() }.toSet()
+		ServerPingHandler(this)
+		PlayerLoginHandler(this)
 	}
 }

@@ -45,7 +45,7 @@ class Helm @Inject constructor(
 			return@async
 		}
 
-		event.result = RedirectPlayer.create(limbo, miniMessage().deserialize("<aqua><red><b>Welcome to Limbo!</b></red>\nAs you're here, the server is restarting, or something broke.\n<grey><i>How am I meant to know? I'm just a pre-written message.</i></grey>\nAnyway, we will try to get you back where you were as soon as we can.\nHowever you can switch to another server using the <white>/server</white> command."))
+		event.result = RedirectPlayer.create(limbo, miniMessage().deserialize("<aqua><red><b>Welcome to Limbo!</b></red>\nAs you're here, the server is restarting, The server you were trying to go to was full, or something broke.\n<grey><i>How am I meant to know? I'm just a pre-written message.</i></grey>\nAnyway, we will try to get you back where you were as soon as we can.\nHowever you can switch to another server using the <white>/server</white> command."))
 	}
 
 	private fun formatServerName(server: RegisteredServer): String =
